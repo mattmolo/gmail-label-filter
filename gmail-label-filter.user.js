@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Gmail Label Filter
 // @namespace    http://mattmolo.com/
-// @version      0.1
+// @version      0.2
 // @description  Filter by labels in gmail
 // @author       Matt Molo
 // @match        https://mail.google.com/mail/*
@@ -16,13 +16,24 @@
 
     const GMAIL_LABEL_CLASS = "av";
     const GMAIL_MAIN_CONTAINER_ID = ":5";
-    const GMAIL_INPUT_ID = "gbqfq";
-    const GMAIL_SEARCH_ID = "gbqfb";
+    const GMAIL_INPUT_ID = "gb_bf";
+    const GMAIL_SEARCH_ID = "gb_df";
+
+    const NO_LABEL_TEXT = "None";
+    const NO_LABEL_SEARCH_TERM = "-has:userLabels";
 
     const CSS_STYLING = `
+        #${BUTTON_CONTAINER_ID} {
+            min-height: 28px;
+        }
         .${BUTTON_CLASS} {
             border: none;
             margin: 5px 10px 5px 0px;
+            font-size: .75rem;
+            letter-spacing: .3px;
+            line-height: .75rem;
+            height: 18px;
+            border-radius: 4px
         }
         .${BUTTON_CLASS}:hover {
             cursor: pointer;
@@ -59,6 +70,10 @@
     }
 
     function toSearchTerm(labelName) {
+        if (labelName === NO_LABEL_TEXT) {
+            return NO_LABEL_SEARCH_TERM;
+        }
+
         labelName = labelName.replace("/", "-");
         labelName = labelName.replace(" ", "-");
         labelName = labelName.toLowerCase();
@@ -73,7 +88,7 @@
         );
         let list = [];
 
-        let input = document.getElementById(GMAIL_INPUT_ID);
+        let input = document.getElementsByClassName(GMAIL_INPUT_ID)[0]
 
         for (var i = 0; i < labels.length; i++) {
             if (
@@ -95,6 +110,14 @@
         list = list.sort((a, b) => {
             return a.text.localeCompare(b.text);
         });
+
+        if (list.length > 0) {
+            list.push({
+                text: NO_LABEL_TEXT,
+                color: '#ffffff',
+                backgroundColor: '#ff0000'
+            });
+        }
 
         let div = document.getElementById(BUTTON_CONTAINER_ID);
 
@@ -129,7 +152,7 @@
                     input.value += searchTerm;
                 }
 
-                document.getElementById(GMAIL_SEARCH_ID).click();
+                document.getElementsByClassName(GMAIL_SEARCH_ID)[0].click();
             };
             return button;
         });
@@ -140,6 +163,8 @@
     }
 
     window.addEventListener("popstate", () => {
+        let div = document.getElementById(BUTTON_CONTAINER_ID);
+        if (div) div.innerHTML = "";
         createLabels();
         setTimeout(createLabels, 100);
         setTimeout(createLabels, 500);
